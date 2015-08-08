@@ -15,7 +15,11 @@ CONTAINER_PATH=${HOME}"/Finances/buddi.fin"
 LOOP_NAME=""
 DEVMAPPER_NAME="Buddi_crypted"
 MNT_PATH="/media/Buddi_crypted"
+
+USERNAME=$(whoami)
+GROUPNAME=$(id -g -n ${USERNAME})
 LINE="------------------------------------"
+
 
 unset HISTFILE
 
@@ -90,7 +94,7 @@ mount_container(){
 	fi
 	
 	echo "Mounting..."
-	sudo mount -t ext4 /dev/mapper/${DEVMAPPER_NAME} $MNT_PATH
+	sudo mount  -t ext4 /dev/mapper/${DEVMAPPER_NAME} $MNT_PATH
 	if [ $? -ne 0 ]; then
 		if [ $? -e 32 ]; then
 		       echo "Not ext4 type. Edit this script"
@@ -100,6 +104,8 @@ mount_container(){
 		exit 1
 	fi
 
+	sudo chown -R ${USERNAME}:${GROUPNAME} ${MNT_PATH}
+	sudo chmod -R 755 $MNT_PATH
 	cd $MNT_PATH
 	./buddi
 	exit 0
@@ -110,11 +116,11 @@ unmount_everything(){
 	sudo umount $MNT_PATH
 	if [ $? -ne 0 ]; then
 		echo "Shit happened"
-		exit 1
 	fi
 	LOOP_NAME="/dev/"$(lsblk -l --output NAME | grep -B1 Buddi_crypted | grep loop)
 	sudo cryptsetup close $DEVMAPPER_NAME
 	sudo losetup -d $LOOP_NAME
+	sudo rm -ri $MNT_PATH
 	echo "Ok"
 	exit 0
 }
